@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Luxembourg Property Search</title>
+<style>
+  :root {
+    --bg: #ffffff; --bg2: #f5f5f3; --bg3: #eeede9;
+    --text: #1a1a1a; --text2: #666; --text3: #999;
+    --border: rgba(0,0,0,0.12); --border2: rgba(0,0,0,0.22);
+    --success: #2d7a4f; --success-bg: #eaf3de;
+    --info: #185fa5; --info-bg: #e6f1fb;
+    --warn: #ba7517; --warn-bg: #faeeda;
+    --danger: #a32d2d; --danger-bg: #fcebeb;
+    --radius: 10px; --radius-sm: 7px;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #1e1e1e; --bg2: #2a2a2a; --bg3: #333;
+      --text: #f0f0f0; --text2: #aaa; --text3: #777;
+      --border: rgba(255,255,255,0.1); --border2: rgba(255,255,255,0.2);
+      --success: #6fcf97; --success-bg: #1a3328;
+      --info: #5fa8e0; --info-bg: #0e2a40;
+      --warn: #f2994a; --warn-bg: #3a2800;
+      --danger: #eb5757; --danger-bg: #3a1010;
+    }
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; background: var(--bg3); color: var(--text); font-size: 15px; line-height: 1.6; }
+  #app { max-width: 720px; margin: 0 auto; padding: 16px; }
+  h1 { font-size: 18px; font-weight: 500; }
+  h2 { font-size: 15px; font-weight: 500; }
+  p { margin: 0; }
+  a { color: var(--info); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  input[type=range] { width: 100%; accent-color: var(--info); }
+  input[type=text], input[type=password], textarea, select {
+    width: 100%; padding: 8px 10px; border: 0.5px solid var(--border2);
+    border-radius: var(--radius-sm); background: var(--bg); color: var(--text);
+    font-size: 14px; font-family: inherit;
+  }
+  input[type=text]:focus, textarea:focus { outline: 2px solid var(--info); outline-offset: 1px; }
+  button {
+    padding: 7px 14px; border: 0.5px solid var(--border2); border-radius: var(--radius-sm);
+    background: transparent; color: var(--text); cursor: pointer; font-size: 13px;
+    font-family: inherit; transition: background 0.15s;
+  }
+  button:hover { background: var(--bg2); }
+  button:disabled { opacity: 0.5; cursor: not-allowed; }
+  button.primary { background: var(--text); color: var(--bg); border-color: var(--text); font-weight: 500; }
+  button.primary:hover { opacity: 0.85; }
+  .card { background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 14px 16px; margin-bottom: 10px; }
+  .section { border: 0.5px solid var(--border); border-radius: var(--radius); margin-bottom: 12px; overflow: hidden; }
+  .section-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: var(--bg2); cursor: pointer; border: none; width: 100%; text-align: left; color: var(--text); font-family: inherit; }
+  .section-body { padding: 12px 14px; }
+  .pill { display: inline-block; font-size: 12px; font-weight: 500; padding: 2px 10px; border-radius: 20px; }
+  .badge { display: inline-block; font-size: 11px; padding: 2px 8px; border-radius: 20px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .tabs { display: flex; border-bottom: 0.5px solid var(--border); margin-bottom: 16px; overflow-x: auto; }
+  .tab { padding: 7px 14px; border: none; border-bottom: 2px solid transparent; background: transparent; cursor: pointer; font-size: 13px; color: var(--text2); font-family: inherit; white-space: nowrap; }
+  .tab.active { color: var(--text); border-bottom-color: var(--text); font-weight: 500; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; background: var(--bg); border: 0.5px solid var(--border); border-radius: var(--radius); padding: 12px 16px; }
+  .meta { font-size: 12px; color: var(--text3); margin-top: 2px; }
+  .empty { text-align: center; padding: 48px 20px; color: var(--text2); }
+  .empty-icon { font-size: 40px; display: block; margin-bottom: 12px; }
+  .notice { padding: 10px 14px; border-radius: var(--radius-sm); font-size: 14px; margin-bottom: 14px; }
+  .notice.info { background: var(--info-bg); color: var(--info); }
+  .notice.danger { background: var(--danger-bg); color: var(--danger); }
+  .notice.warn { background: var(--warn-bg); color: var(--warn); }
+  .notice.success { background: var(--success-bg); color: var(--success); }
+  label.row { display: flex; justify-content: space-between; font-size: 13px; color: var(--text2); margin-bottom: 4px; }
+  label.row span.val { font-weight: 500; color: var(--text); }
+  .prop-header { padding: 12px 14px; cursor: pointer; }
+  .prop-body { padding: 0 14px 14px; border-top: 0.5px solid var(--border); }
+  .tag-row { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 6px; }
+  .field-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; margin: 10px 0; font-size: 13px; }
+  .field-grid span.k { color: var(--text2); }
+  .action-btn-row { display: flex; gap: 6px; margin-top: 10px; flex-wrap: wrap; align-items: center; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid var(--border); border-top-color: var(--text2); border-radius: 50%; animation: spin 0.7s linear infinite; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .scrape-row { display: flex; gap: 6px; margin-bottom: 10px; }
+  .scrape-row input { flex: 1; }
+  .history-filters { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+  .score-bar-wrap { height: 4px; background: var(--bg3); border-radius: 2px; margin-top: 4px; }
+  .score-bar { height: 4px; border-radius: 2px; }
+  textarea.paste-area { min-height: 160px; resize: vertical; font-family: inherit; font-size: 13px; }
+  @media (max-width: 500px) {
+    .grid2 { grid-template-columns: 1fr; }
+    .topbar { flex-direction: column; align-items: flex-start; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+<div id="app">
+  <div class="topbar">
+    <div>
+      <h1>🏡 Luxembourg property search</h1>
+      <p class="meta" id="last-run-label">Never run</p>
+    </div>
+    <button class="primary" id="run-btn" onclick="runSearch()">▶ Run search</button>
+  </div>
+
+  <div class="tabs" id="tabs"></div>
+  <div id="tab-content"></div>
+</div>
+
+<script>
+// ─── CONFIGURATION ────────────────────────────────────────────────────────────
+// Replace this with your actual Cloudflare Worker URL after deploying
+const WORKER_URL = "https://YOUR_WORKER_NAME.YOUR_SUBDOMAIN.workers.dev";
+
+// ─── State ────────────────────────────────────────────────────────────────────
+const STORE = {
+  get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch{ return null; } },
+  set(k,v){ localStorage.setItem(k, JSON.stringify(v)); },
+};
+
+let CFG = STORE.get("lux_cfg") || {
+  budgetIdeal: 1100000, budgetMax: 1400000,
+  minArea: 140, preferredArea: 160,
+  minBedrooms: 2, preferredBedrooms: 3, minBathrooms: 2,
+  requireGarden: true, requireFireplace: true, requireVanParking: true, requireGarage: true,
+  athomeUrl: "https://www.athome.lu/srp/?old_build=true&tr=buy&price_max=1500000&ptypes=house&q=a2e51548,53b1d1d7,c3f33a76,44f6ecbe,7304121a,d8380e34",
+};
+let RESULTS  = STORE.get("lux_results")  || null;
+let HISTORY  = STORE.get("lux_history")  || {};
+let LAST_RUN = STORE.get("lux_lastrun")  || null;
+let ACTIVE_TAB    = "search";
+let LOADING       = false;
+let MANUAL_LOADING = false;
+let _errorMsg     = "";
+
+function saveCfg()    { STORE.set("lux_cfg",     CFG);     }
+function saveHistory() { STORE.set("lux_history",  HISTORY);  }
+function saveResults() { STORE.set("lux_results",  RESULTS);  }
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────
+function fmt(n){ return Number(n).toLocaleString("fr-LU"); }
+function esc(s){ return String(s||"").replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;"); }
+
+function scoreStyle(s){
+  if(s>=85) return { bg:"var(--success-bg)", color:"var(--success)", label:"Excellent" };
+  if(s>=70) return { bg:"var(--info-bg)",    color:"var(--info)",    label:"Strong"    };
+  if(s>=55) return { bg:"var(--warn-bg)",    color:"var(--warn)",    label:"Possible"  };
+  if(s>=40) return { bg:"var(--bg2)",        color:"var(--text2)",   label:"Weak"      };
+  return             { bg:"var(--danger-bg)", color:"var(--danger)",  label:"Ignore"   };
+}
+function pillHtml(score){
+  const s=scoreStyle(score);
+  return `<span class="pill" style="background:${s.bg};color:${s.color}">${score}/100 · ${s.label}</span>`;
+}
+function badgeHtml(label,type="info"){
+  const map={info:"var(--info-bg),var(--info)",success:"var(--success-bg),var(--success)",warn:"var(--warn-bg),var(--warn)",muted:"var(--bg2),var(--text2)"};
+  const [bg,col]=(map[type]||map.info).split(",");
+  return `<span class="badge" style="background:${bg};color:${col}">${esc(label)}</span>`;
+}
+function scoreBarHtml(score){
+  const s=scoreStyle(score);
+  return `<div class="score-bar-wrap"><div class="score-bar" style="width:${score}%;background:${s.color}"></div></div>`;
+}
+
+// ─── API call (via Cloudflare Worker) ─────────────────────────────────────────
+const SYSTEM = `You are a critical Luxembourg property search analyst. You MUST respond with ONLY a valid JSON object. No preamble, no markdown fences, no text before or after the JSON. Start your response with { and end with }. If you cannot find listings, return the JSON structure with empty arrays and explain in the summary field.`;
+
+async function callClaude(userPrompt, useWebSearch=true){
+  const body = {
+    model: "claude-sonnet-4-6",
+    max_tokens: 8000,
+    system: SYSTEM,
+    messages: [{ role:"user", content:userPrompt }],
+  };
+  if(useWebSearch) body.tools = [{ type:"web_search_20250305", name:"web_search" }];
+
+  const res = await fetch(WORKER_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const data = await res.json();
+  if(data.error) throw new Error(data.error.message || "API error");
+
+  let text = "";
+  for(const b of data.content){ if(b.type==="text") text += b.text; }
+  text = text.replace(/```json\s*/g,"").replace(/```\s*/g,"").trim();
+  const start=text.indexOf("{"), end=text.lastIndexOf("}");
+  if(start===-1||end===-1) throw new Error("No JSON in response. Raw: "+text.slice(0,300));
+  return JSON.parse(text.slice(start, end+1));
+}
+
+// ─── Prompts ──────────────────────────────────────────────────────────────────
+function searchPrompt(){
+  const mh=[];
+  if(CFG.requireGarden)     mh.push("well-sized garden");
+  if(CFG.requireFireplace)  mh.push("fireplace");
+  if(CFG.requireVanParking) mh.push("parking for a 6m long van (2.70m height, 2.1m wide)");
+  if(CFG.requireGarage)     mh.push("garage for at least one car");
+  return `You are a critical Luxembourg property search analyst. Search atHome.lu, Immotop.lu, Wortimmo.lu and other Luxembourg real estate portals for residential property listings.
+
+CRITERIA:
+- Budget: ideal max €${fmt(CFG.budgetIdeal)}, absolute max €${fmt(CFG.budgetMax)}
+- Min living area: ${CFG.minArea} m² (preferred ${CFG.preferredArea} m²)
+- Bedrooms: min ${CFG.minBedrooms} (preferred ${CFG.preferredBedrooms})
+- Bathrooms: min ${CFG.minBathrooms}
+- Property types: house, semi-detached, detached, villa, farm, cottage
+- Locations: Luxembourg City and nearby (Strassen, Bertrange, Howald, Hesperange, Cessange, Merl, Belair, Limpertsberg, Kirchberg, Bonnevoie, Hollerich, Mamer, Capellen, Walferdange, Niederanven, Sandweiler, Leudelange, Steinsel, Lorentzweiler, Bridel, Kopstal, Itzig, Fentange, Alzingen, Senningerberg)
+- Must-haves: ${mh.join(", ")}, good connection to Luxembourg City, quiet neighbourhood
+- Nice-to-haves: cellar, good energy class, public transport, shops nearby
+- Avoid: overpriced, vague listings, no photos, heavy renovation, busy roads, poor energy class without price advantage
+
+TASK: Find 3–8 strong matches. Be critical. Score each 0–100. Already known listing IDs to de-duplicate: ${Object.keys(HISTORY).join(", ")||"none"}.
+
+Respond ONLY with this JSON:
+{"summary":"...","searchLimitations":"...","bestMatches":[{"id":"unique_id","title":"...","type":"...","location":"...","address":null,"price":950000,"area":165,"land":800,"bedrooms":3,"bathrooms":2,"energy":"C","garage":true,"garden":true,"fireplace":null,"yearBuilt":1990,"agency":"...","url":"https://...","score":78,"isNew":true,"priceDrop":false,"oldPrice":null,"duplicate":false,"duplicateUrls":[],"manual":false,"positives":["..."],"concerns":["..."],"whyConsider":"...","nextAction":"...","questions":["..."],"redFlags":[]}],"priceDrops":[{"title":"...","url":"...","oldPrice":1100000,"newPrice":990000,"moreInteresting":true,"comment":"..."}],"duplicates":[{"title":"...","urls":["..."],"consistent":true,"priceDifference":0,"bestUrl":"..."}],"suspicious":[{"title":"...","url":"...","reason":"..."}],"ignored":[{"title":"...","reason":"..."}],"actionList":["..."]}`;
+}
+
+function manualPrompt(text){
+  return `You are a critical Luxembourg property analyst. The user has pasted listing text. Extract and score each property.
+
+CRITERIA: budget ideal €${fmt(CFG.budgetIdeal)} max €${fmt(CFG.budgetMax)}, min area ${CFG.minArea}m², bedrooms min ${CFG.minBedrooms}, bathrooms min ${CFG.minBathrooms}, must-haves: ${[CFG.requireGarden&&"garden",CFG.requireFireplace&&"fireplace",CFG.requireVanParking&&"van parking",CFG.requireGarage&&"garage"].filter(Boolean).join(", ")}.
+
+PASTED TEXT:
+${text}
+
+Mark each with "manual":true. Score 0–100. Set missing fields to null.
+
+Respond ONLY with:
+{"summary":"...","searchLimitations":"","bestMatches":[{"id":"manual_1","title":"...","type":"...","location":"...","address":null,"price":null,"area":null,"land":null,"bedrooms":null,"bathrooms":null,"energy":null,"garage":null,"garden":null,"fireplace":null,"yearBuilt":null,"agency":null,"url":null,"score":0,"isNew":false,"priceDrop":false,"oldPrice":null,"duplicate":false,"duplicateUrls":[],"manual":true,"positives":[],"concerns":[],"whyConsider":"","nextAction":"","questions":[],"redFlags":[]}],"priceDrops":[],"duplicates":[],"suspicious":[],"ignored":[],"actionList":[]}`;
+}
+
+function scrapePrompt(html){
+  return `You are a critical Luxembourg property analyst. I have fetched the following HTML from an atHome.lu search results page. Extract all property listings and score each 0–100 against these criteria: budget ideal €${fmt(CFG.budgetIdeal)} max €${fmt(CFG.budgetMax)}, min area ${CFG.minArea}m², min ${CFG.minBedrooms} bedrooms, min ${CFG.minBathrooms} bathrooms, must-haves: ${[CFG.requireGarden&&"garden",CFG.requireFireplace&&"fireplace",CFG.requireVanParking&&"van parking",CFG.requireGarage&&"garage"].filter(Boolean).join(", ")}.
+
+HTML (truncated):
+${html.slice(0,12000)}
+
+Respond ONLY with:
+{"summary":"...","searchLimitations":"...","bestMatches":[...],"priceDrops":[],"duplicates":[],"suspicious":[],"ignored":[],"actionList":[]}`;
+}
+
+// ─── History helpers ───────────────────────────────────────────────────────────
+function mergeResults(parsed, isManual=false){
+  const now = new Date().toISOString();
+  for(const p of (parsed.bestMatches||[])){
+    if(!HISTORY[p.id]){
+      HISTORY[p.id] = { firstSeen:now, lastSeen:now, title:p.title||p.id, originalPrice:p.price, latestPrice:p.price, priceHistory:p.price?[{date:now,price:p.price}]:[], scores:[{date:now,score:p.score}], status:"new", urls:[p.url].filter(Boolean), manual:!!p.manual };
+    } else {
+      HISTORY[p.id].lastSeen  = now;
+      HISTORY[p.id].title     = p.title||p.id;
+      if(p.price && HISTORY[p.id].latestPrice!==p.price) HISTORY[p.id].priceHistory.push({date:now,price:p.price});
+      HISTORY[p.id].latestPrice = p.price;
+      HISTORY[p.id].scores.push({date:now,score:p.score});
+      if(p.url && !HISTORY[p.id].urls.includes(p.url)) HISTORY[p.id].urls.push(p.url);
+    }
+    p.status = HISTORY[p.id].status || "new";
+  }
+  saveHistory();
+  if(!RESULTS) RESULTS = parsed;
+  else if(isManual){
+    RESULTS.bestMatches = [...(RESULTS.bestMatches||[]).filter(x=>!x.manual), ...(parsed.bestMatches||[])];
+    RESULTS.actionList  = [...(RESULTS.actionList||[]), ...(parsed.actionList||[])];
+  } else {
+    const manuals = (RESULTS.bestMatches||[]).filter(x=>x.manual);
+    RESULTS = { ...parsed, bestMatches:[...manuals,...(parsed.bestMatches||[])] };
+  }
+  saveResults();
+}
+
+function setStatus(id, status){
+  if(HISTORY[id]) HISTORY[id].status = status;
+  saveHistory();
+  if(RESULTS?.bestMatches) RESULTS.bestMatches = RESULTS.bestMatches.map(p=>p.id===id?{...p,status}:p);
+  saveResults();
+  renderTab();
+}
+
+// ─── atHome fetch ──────────────────────────────────────────────────────────────
+async function fetchAtHome(){
+  const url = CFG.athomeUrl;
+  if(!url) throw new Error("No atHome URL configured.");
+  const proxy = `https://api.allorigins.win/get?url=${encodeURIComponent(url)}`;
+  const res  = await fetch(proxy);
+  const data = await res.json();
+  return data.contents || "";
+}
+
+// ─── Run functions ─────────────────────────────────────────────────────────────
+function showError(msg){ _errorMsg=msg; renderTab(); setTimeout(()=>{ _errorMsg=""; renderTab(); },8000); }
+
+async function runSearch(){
+  if(LOADING) return;
+  LOADING=true; renderAll();
+  try {
+    const parsed = await callClaude(searchPrompt(), true);
+    mergeResults(parsed, false);
+    LAST_RUN = new Date().toISOString();
+    STORE.set("lux_lastrun", LAST_RUN);
+    ACTIVE_TAB = "search";
+  } catch(e){ showError(e.message); }
+  LOADING=false; renderAll();
+}
+
+async function runManual(text){
+  if(MANUAL_LOADING) return;
+  MANUAL_LOADING=true; renderTab();
+  try {
+    const parsed = await callClaude(manualPrompt(text), false);
+    mergeResults(parsed, true);
+    ACTIVE_TAB="search";
+  } catch(e){ showError(e.message); }
+  MANUAL_LOADING=false; renderAll();
+}
+
+async function runAtHomeScrape(){
+  if(LOADING) return;
+  LOADING=true; renderTab();
+  try {
+    const html   = await fetchAtHome();
+    if(!html) throw new Error("Could not fetch atHome.lu page. The proxy may be rate-limited — try again in a minute.");
+    const parsed = await callClaude(scrapePrompt(html), false);
+    mergeResults(parsed, false);
+    LAST_RUN = new Date().toISOString();
+    STORE.set("lux_lastrun", LAST_RUN);
+    ACTIVE_TAB="search";
+  } catch(e){ showError(e.message); }
+  LOADING=false; renderAll();
+}
+
+// ─── Render ────────────────────────────────────────────────────────────────────
+function renderAll(){ renderTopbar(); renderTabs(); renderTab(); }
+
+function renderTopbar(){
+  document.getElementById("last-run-label").textContent = LAST_RUN ? "Last run: "+new Date(LAST_RUN).toLocaleString("fr-LU") : "Never run";
+  const btn = document.getElementById("run-btn");
+  btn.disabled = LOADING;
+  btn.innerHTML = LOADING ? `<span class="spinner"></span> Searching…` : "▶ Run search";
+}
+
+const TAB_DEFS=[{id:"search",label:"Search"},{id:"athome",label:"atHome.lu"},{id:"manual",label:"Manual"},{id:"config",label:"Config"},{id:"history",label:"History"}];
+
+function renderTabs(){
+  document.getElementById("tabs").innerHTML = TAB_DEFS.map(t=>{
+    let label=t.label;
+    if(t.id==="history") label+=` (${Object.keys(HISTORY).length})`;
+    if(t.id==="manual"){ const mc=(RESULTS?.bestMatches||[]).filter(x=>x.manual).length; if(mc>0) label+=` (${mc})`; }
+    return `<button class="tab${ACTIVE_TAB===t.id?" active":""}" onclick="setTab('${t.id}')">${label}</button>`;
+  }).join("");
+}
+
+function setTab(id){ ACTIVE_TAB=id; renderTabs(); renderTab(); }
+
+function renderTab(){
+  const el = document.getElementById("tab-content");
+  if     (ACTIVE_TAB==="search")  el.innerHTML = renderSearch();
+  else if(ACTIVE_TAB==="athome")  el.innerHTML = renderAtHome();
+  else if(ACTIVE_TAB==="manual")  el.innerHTML = renderManual();
+  else if(ACTIVE_TAB==="config")  el.innerHTML = renderConfig();
+  else if(ACTIVE_TAB==="history") el.innerHTML = renderHistory();
+}
+
+function errorBanner(){ return _errorMsg?`<div class="notice danger">${esc(_errorMsg)}</div>`:""; }
+
+// ── Search tab ─────────────────────────────────────────────────────────────────
+function renderSearch(){
+  let html = errorBanner();
+  if(LOADING) return html+`<div class="empty"><span class="empty-icon">⏳</span><p style="font-size:15px">Searching Luxembourg real estate portals…</p><p class="meta" style="margin-top:6px">This may take 20–40 seconds</p></div>`;
+  if(!RESULTS) return html+`<div class="empty"><span class="empty-icon">🏡</span><p style="font-size:15px">No results yet. Run a search, scrape atHome.lu, or paste listings manually.</p><p class="meta" style="margin-top:6px">Budget: €${fmt(CFG.budgetIdeal)} ideal · €${fmt(CFG.budgetMax)} max · min ${CFG.minArea} m²</p></div>`;
+
+  if(RESULTS.summary) html+=`<div class="notice info">${esc(RESULTS.summary)}${RESULTS.searchLimitations?`<br><em style="font-size:13px">${esc(RESULTS.searchLimitations)}</em>`:""}</div>`;
+
+  const best = RESULTS.bestMatches||[];
+  if(best.length) html+=sectionWrap("⭐ Best matches ("+best.length+")","best",[...best].sort((a,b)=>b.score-a.score).map(propCardHtml).join(""),true);
+  const pd=RESULTS.priceDrops||[];
+  if(pd.length) html+=sectionWrap("📉 Price drops ("+pd.length+")","drops",pd.map(priceDropHtml).join(""));
+  const dup=RESULTS.duplicates||[];
+  if(dup.length) html+=sectionWrap("📋 Duplicates ("+dup.length+")","dups",dup.map(dupHtml).join(""));
+  const sus=RESULTS.suspicious||[];
+  if(sus.length) html+=sectionWrap("⚠️ Suspicious ("+sus.length+")","sus",sus.map(suspHtml).join(""));
+  const ign=RESULTS.ignored||[];
+  if(ign.length) html+=sectionWrap("✗ Ignored ("+ign.length+")","ign",ign.map(ig=>`<div style="padding:5px 0;border-bottom:0.5px solid var(--border);font-size:13px"><span>${esc(ig.title)}</span><span style="color:var(--text2);margin-left:8px">— ${esc(ig.reason)}</span></div>`).join(""),false);
+  const al=RESULTS.actionList||[];
+  if(al.length) html+=sectionWrap("✅ Recommended actions","actions",al.map((a,i)=>`<div style="display:flex;gap:8px;padding:4px 0"><span style="color:var(--text2);min-width:20px;font-size:13px">${i+1}.</span><span style="font-size:13px">${esc(a)}</span></div>`).join(""),true);
+  return html;
+}
+
+function sectionWrap(title,id,body,defaultOpen=false){
+  return `<div class="section"><button class="section-header" onclick="toggleSection('${id}')"><span style="flex:1;font-weight:500;font-size:14px">${title}</span><span id="chevron-${id}">${defaultOpen?"▲":"▼"}</span></button><div id="section-${id}" style="display:${defaultOpen?"block":"none"}"><div class="section-body">${body}</div></div></div>`;
+}
+function toggleSection(id){ const el=document.getElementById("section-"+id),ch=document.getElementById("chevron-"+id),open=el.style.display==="none"; el.style.display=open?"block":"none"; ch.textContent=open?"▲":"▼"; }
+
+function propCardHtml(p){
+  const pid=esc(p.id);
+  const tags=[pillHtml(p.score)];
+  if(p.isNew)    tags.push(badgeHtml("New","success"));
+  if(p.priceDrop) tags.push(badgeHtml("Price drop","warn"));
+  if(p.duplicate) tags.push(badgeHtml("Duplicate","muted"));
+  if(p.manual)    tags.push(badgeHtml("Manual","info"));
+  if(p.status&&p.status!=="new") tags.push(badgeHtml(p.status,"muted"));
+
+  const fields=[["Bedrooms",p.bedrooms??"—"],["Bathrooms",p.bathrooms??"—"],["Land",p.land?p.land+" m²":"—"],["Energy",p.energy??"—"],["Garage",p.garage===true?"Yes":p.garage===false?"No":"—"],["Garden",p.garden===true?"Yes":p.garden===false?"No":"—"],["Year built",p.yearBuilt??"—"],["Agency",p.agency??"—"]];
+
+  let det=`<div class="prop-body"><div class="field-grid">${fields.map(([k,v])=>`<div><span class="k">${k}: </span>${esc(String(v))}</div>`).join("")}</div>`;
+  if(p.positives?.length) det+=`<p style="font-size:12px;font-weight:500;color:var(--success);margin:8px 0 4px">Key positives</p>${p.positives.map(x=>`<p style="font-size:13px;margin:2px 0">✓ ${esc(x)}</p>`).join("")}`;
+  if(p.concerns?.length)  det+=`<p style="font-size:12px;font-weight:500;color:var(--danger);margin:8px 0 4px">Key concerns</p>${p.concerns.map(x=>`<p style="font-size:13px;margin:2px 0">⚠ ${esc(x)}</p>`).join("")}`;
+  if(p.whyConsider)  det+=`<p style="font-size:12px;font-weight:500;color:var(--text2);margin:8px 0 4px">Why consider</p><p style="font-size:13px">${esc(p.whyConsider)}</p>`;
+  if(p.nextAction)   det+=`<p style="font-size:12px;font-weight:500;color:var(--text2);margin:8px 0 4px">Recommended action</p><p style="font-size:13px">${esc(p.nextAction)}</p>`;
+  if(p.questions?.length) det+=`<p style="font-size:12px;font-weight:500;color:var(--text2);margin:8px 0 4px">Questions to ask</p>${p.questions.map(q=>`<p style="font-size:13px;margin:2px 0">· ${esc(q)}</p>`).join("")}`;
+  det+=`<div class="action-btn-row">`;
+  if(p.url) det+=`<a href="${esc(p.url)}" target="_blank" rel="noreferrer" style="font-size:13px">↗ View listing</a>`;
+  (p.duplicateUrls||[]).forEach((u,i)=>{ det+=`<a href="${esc(u)}" target="_blank" rel="noreferrer" style="font-size:13px;color:var(--text2)">↗ Mirror ${i+1}</a>`; });
+  det+=`<span style="flex:1"></span>`;
+  ["shortlist","contacted","visited","rejected"].forEach(s=>{ det+=`<button onclick="setStatus('${pid}','${s}')">${s}</button>`; });
+  det+=`</div></div>`;
+
+  const ppm = p.price&&p.area ? ` · €${fmt(Math.round(p.price/p.area))}/m²` : "";
+  return `<div class="card" style="padding:0;margin-bottom:10px"><div class="prop-header" onclick="toggleProp('${pid}')"><div class="tag-row">${tags.join("")}</div><p style="font-weight:500;font-size:14px;margin:4px 0">${esc(p.title)}</p><p style="font-size:13px;color:var(--text2)">${esc(p.location)} · ${esc(p.type)} · ${p.price?`€${fmt(p.price)}`:"Price TBD"}${p.area?` · ${p.area} m²`:""}${ppm}</p>${scoreBarHtml(p.score)}</div><div id="prop-${pid}" style="display:none">${det}</div></div>`;
+}
+function toggleProp(id){ const el=document.getElementById("prop-"+id); if(el) el.style.display=el.style.display==="none"?"block":"none"; }
+
+function priceDropHtml(p){
+  const diff=p.oldPrice-p.newPrice, pct=Math.round(diff/p.oldPrice*100);
+  return `<div class="card"><p style="font-weight:500;font-size:14px;margin-bottom:4px">${esc(p.title)}</p><p style="font-size:13px;color:var(--text2);margin-bottom:4px">€${fmt(p.oldPrice)} → <span style="color:var(--success);font-weight:500">€${fmt(p.newPrice)}</span> (−€${fmt(diff)} · −${pct}%)</p><p style="font-size:13px;margin-bottom:6px">${esc(p.comment)}</p>${p.url?`<a href="${esc(p.url)}" target="_blank" rel="noreferrer" style="font-size:13px">↗ View</a>`:""}</div>`;
+}
+function dupHtml(d){
+  return `<div class="card"><p style="font-weight:500;font-size:14px;margin-bottom:4px">${esc(d.title)}</p><p style="font-size:13px;color:var(--text2);margin-bottom:6px">${d.consistent?"Details consistent":"⚠ Inconsistent details"} · ${d.urls?.length||0} portals</p>${(d.urls||[]).map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noreferrer" style="font-size:13px;margin-right:10px">↗ Portal ${i+1}</a>`).join("")}</div>`;
+}
+function suspHtml(s){
+  return `<div class="card"><p style="font-weight:500;font-size:14px;margin-bottom:4px">${esc(s.title)}</p><p style="font-size:13px;color:var(--danger);margin-bottom:6px">⚠ ${esc(s.reason)}</p>${s.url?`<a href="${esc(s.url)}" target="_blank" rel="noreferrer" style="font-size:13px">↗ View</a>`:""}</div>`;
+}
+
+// ── atHome tab ──────────────────────────────────────────────────────────────────
+function renderAtHome(){
+  return `<div class="notice info">This tab fetches your saved atHome.lu search URL via a CORS proxy and passes the results to Claude for extraction and scoring.</div>
+  <div class="card">
+    <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:6px">Your atHome.lu search URL</label>
+    <div class="scrape-row"><input type="text" id="athome-url" value="${esc(CFG.athomeUrl)}" /><button onclick="saveAtHomeUrl()">Save</button></div>
+    <button ${LOADING?"disabled":""} onclick="runAtHomeScrape()" style="font-weight:500">${LOADING?`<span class="spinner"></span> Fetching…`:"▶ Fetch & analyse"}</button>
+    <p style="font-size:12px;color:var(--text3);margin-top:10px">The proxy (allorigins.win) may occasionally be rate-limited. If it fails, wait a minute and retry.</p>
+  </div>${errorBanner()}`;
+}
+function saveAtHomeUrl(){ CFG.athomeUrl=document.getElementById("athome-url").value.trim(); saveCfg(); alert("atHome URL saved."); }
+
+// ── Manual tab ──────────────────────────────────────────────────────────────────
+function renderManual(){
+  return `<div class="card">
+    <p style="font-size:13px;color:var(--text2);margin-bottom:10px">Paste one or more listings you found manually — full listing text, a URL, or any details. Separate multiple listings with a blank line.</p>
+    <textarea class="paste-area" id="manual-text" placeholder="Paste listing text, URL, or property details here…"></textarea>
+    <button ${MANUAL_LOADING?"disabled":""} onclick="submitManual()" style="margin-top:10px;font-weight:500">${MANUAL_LOADING?`<span class="spinner"></span> Analysing…`:"▶ Analyse listings"}</button>
+  </div>${errorBanner()}`;
+}
+function submitManual(){ const t=document.getElementById("manual-text")?.value?.trim(); if(t) runManual(t); }
+
+// ── Config tab ───────────────────────────────────────────────────────────────────
+function renderConfig(){
+  function slider(label,key,min,max,step,isPrice=false){
+    const val=isPrice?`€${fmt(CFG[key])}`:CFG[key];
+    return `<div style="margin-bottom:14px"><label class="row"><span>${label}</span><span class="val" id="val-${key}">${val}</span></label><input type="range" min="${min}" max="${max}" step="${step}" value="${CFG[key]}" oninput="updateCfgSlider('${key}',Number(this.value),${isPrice})" /></div>`;
+  }
+  function chk(label,key){ return `<label style="display:flex;align-items:center;gap:6px;font-size:13px;cursor:pointer"><input type="checkbox" ${CFG[key]?"checked":""} onchange="updateCfg('${key}',this.checked)" /> ${label}</label>`; }
+  return `
+  <div class="card">
+    <h2 style="margin-bottom:14px">Worker URL</h2>
+    <label style="font-size:13px;color:var(--text2);display:block;margin-bottom:6px">Your Cloudflare Worker URL</label>
+    <div style="display:flex;gap:8px;margin-bottom:6px">
+      <input type="text" id="worker-url-input" value="${esc(WORKER_URL)}" placeholder="https://your-worker.workers.dev" style="flex:1" />
+      <button onclick="saveWorkerUrl()">Save</button>
+    </div>
+    <p style="font-size:12px;color:var(--text3)">Set this once after deploying your Cloudflare Worker.</p>
+  </div>
+  <div class="card">
+    <h2 style="margin-bottom:14px">Budget & size</h2>
+    ${slider("Ideal budget (€)","budgetIdeal",500000,2000000,50000,true)}
+    ${slider("Max budget (€)","budgetMax",500000,3000000,50000,true)}
+    ${slider("Min living area (m²)","minArea",80,300,10)}
+    ${slider("Preferred area (m²)","preferredArea",100,400,10)}
+    ${slider("Min bedrooms","minBedrooms",1,6,1)}
+    ${slider("Min bathrooms","minBathrooms",1,4,1)}
+  </div>
+  <div class="card">
+    <h2 style="margin-bottom:12px">Must-haves</h2>
+    <div class="grid2">
+      ${chk("Garden required","requireGarden")}
+      ${chk("Fireplace required","requireFireplace")}
+      ${chk("Van parking required","requireVanParking")}
+      ${chk("Garage required","requireGarage")}
+    </div>
+  </div>`;
+}
+
+function saveWorkerUrl(){
+  const url = document.getElementById("worker-url-input").value.trim();
+  // Patch the in-memory constant and persist it
+  window.WORKER_URL_OVERRIDE = url;
+  STORE.set("lux_worker_url", url);
+  alert("Worker URL saved. It will be used from the next search run.");
+}
+
+function updateCfgSlider(key,val,isPrice){
+  CFG[key]=val; saveCfg();
+  const el=document.getElementById("val-"+key);
+  if(el) el.textContent=isPrice?`€${fmt(val)}`:val;
+}
+function updateCfg(key,val){ CFG[key]=val; saveCfg(); }
+
+// ── History tab ──────────────────────────────────────────────────────────────────
+let _histFilter="all";
+function renderHistory(){
+  const entries=Object.entries(HISTORY);
+  const filtered=_histFilter==="all"?entries:entries.filter(([,v])=>v.status===_histFilter);
+  let html=`<div class="history-filters">${["all","new","shortlist","contacted","visited","rejected"].map(f=>`<button onclick="setHistFilter('${f}')" style="${_histFilter===f?"background:var(--bg2)":""}">${f}${f==="all"?` (${entries.length})`:""}</button>`).join("")}</div>`;
+  if(!filtered.length) return html+`<div class="empty"><span class="empty-icon">📭</span><p>No listings tracked yet.</p></div>`;
+  return html+filtered.map(([id,e])=>{
+    const links=(e.urls||[]).filter(Boolean).map((u,i)=>`<a href="${esc(u)}" target="_blank" rel="noreferrer" style="font-size:12px">↗ Listing${e.urls.length>1?` ${i+1}`:""}</a>`).join(" ");
+    const pc=e.priceHistory?.length>1?` · ${e.priceHistory.length} price changes`:"";
+    return `<div class="card"><div style="display:flex;justify-content:space-between;align-items:flex-start;gap:8px"><p style="font-weight:500;font-size:14px">${esc(e.title||id)}</p><div style="display:flex;gap:6px;flex-shrink:0">${e.manual?badgeHtml("manual","info"):""}${badgeHtml(e.status||"new","muted")}</div></div><p class="meta">First seen: ${new Date(e.firstSeen).toLocaleDateString("fr-LU")} · Price: ${e.latestPrice?`€${fmt(e.latestPrice)}`:"—"}${pc} · Last seen: ${new Date(e.lastSeen).toLocaleDateString("fr-LU")}</p><div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;align-items:center">${links}<span style="flex:1"></span>${["shortlist","contacted","visited","rejected"].map(s=>`<button onclick="setStatus('${esc(id)}','${s}')" style="font-size:11px;padding:2px 8px">${s}</button>`).join("")}</div></div>`;
+  }).join("");
+}
+function setHistFilter(f){ _histFilter=f; renderTab(); }
+
+// ── Boot ───────────────────────────────────────────────────────────────────────
+// Load persisted worker URL override if set
+(function(){ const saved=STORE.get("lux_worker_url"); if(saved) window.WORKER_URL_OVERRIDE=saved; })();
+
+// Patch callClaude to use override if present
+const _origFetch=window.fetch;
+function getWorkerUrl(){ return window.WORKER_URL_OVERRIDE||WORKER_URL; }
+
+renderAll();
+</script>
+</body>
+</html>
